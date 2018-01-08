@@ -1,4 +1,16 @@
 <Page loaded="pageLoaded">
   <ActionBar title="My App" class="action-bar"></ActionBar>
-  <!-- Your UI components go here -->
+  
+  <StackLayout orientation="vertical">
+    <Label text="Username" />
+    <TextField />
+    <Label text="Game name" />
+    <TextField />
+    <Label text="Password" />
+    <TextField secure="true" />
+    
+    <Button text="Join" class="link" tap="join" />
+
+  </StackLayout>
+
 </Page>
