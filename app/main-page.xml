@@ -1,16 +1,28 @@
 <Page loaded="pageLoaded">
-  <ActionBar title="My App" class="action-bar"></ActionBar>
-  
-  <StackLayout orientation="vertical">
-    <Label text="Username" />
-    <TextField />
-    <Label text="Game name" />
-    <TextField />
-    <Label text="Password" />
-    <TextField secure="true" />
-    
-    <Button text="Join" class="link" tap="join" />
+	<ActionBar title="Join game" class="action-bar"></ActionBar>
 
-  </StackLayout>
+	<StackLayout orientation="vertical">
+		<Image src="https://i.imgur.com/V42zBSh.png" width="auto"/>
+		
+		<Label />
 
+		<StackLayout class="input-field">
+			<Label text="Username:" />
+			<TextField />
+		</StackLayout>
+
+		<StackLayout class="input-field">
+			<Label text="Game name:" />
+			<TextField />
+		</StackLayout>
+
+		<StackLayout class="input-field">
+			<Label text="Password:" />
+			<TextField secure="true" />
+		</StackLayout>
+
+		<Label />
+
+		<Button text="Join" class="btn btn-primary" tap="join" width="300" />
+	</StackLayout>
 </Page>
