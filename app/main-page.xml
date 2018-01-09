@@ -1,25 +1,19 @@
 <Page loaded="pageLoaded">
-	<ActionBar title="Join game" class="action-bar"></ActionBar>
+	<ActionBar id="actionBar" title="Join game" class="action-bar"></ActionBar>
 
-	<StackLayout orientation="vertical">
+	<StackLayout id="slackLayout" orientation="vertical">
 		<Image src="https://i.imgur.com/V42zBSh.png" width="auto"/>
 		
 		<Label />
 
-		<StackLayout class="input-field">
-			<Label text="Username:" />
-			<TextField />
-		</StackLayout>
+		<Label text="Username:" />
+		<TextField id="username" />
 
-		<StackLayout class="input-field">
-			<Label text="Game name:" />
-			<TextField />
-		</StackLayout>
+		<Label text="Game name:" />
+		<TextField id="gamename" />
 
-		<StackLayout class="input-field">
-			<Label text="Password:" />
-			<TextField secure="true" />
-		</StackLayout>
+		<Label text="Password:" />
+		<TextField id="password" />
 
 		<Label />
 
