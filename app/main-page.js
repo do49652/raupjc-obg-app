@@ -262,6 +262,11 @@ exports.join = function () {
 };
 
 var addContainerOpeners = function (main, left, right) {
+    var leftLayout = page.getViewById("leftStackLayout");
+    resize(leftLayout, 0.8, 1);
+    var rightLayout = page.getViewById("rightStackLayout");
+    resize(rightLayout, 0.8, 1);
+
     var leftOpener = new button.Button();
     leftOpener.text = "Items & Chat";
 
@@ -272,53 +277,46 @@ var addContainerOpeners = function (main, left, right) {
 
     resize(rightOpener, 0.5, null);
 
+    var close1 = new button.Button();
+    var close2 = new button.Button();
+    close1.text = "Close";
+    close2.text = "Close";
+
+    leftLayout.addChild(close1);
+    rightLayout.addChild(close2);
+
     main.addChild(leftOpener);
     main.addChild(rightOpener);
 
     leftOpener.on(button.Button.tapEvent, function (eventData) {
-        left.animate({
-            translate: {
-                x: styleProperties.PercentLength.toDevicePixels(this.width) / 2,
-                y: 0
-            },
-            duration: 1000,
-            curve: enums.AnimationCurve.easeIn
-        });
-
-        if (styleProperties.PercentLength.toDevicePixels(right.translateX) < platform.screen.mainScreen.widthPixels / 2) {
-            right.animate({
-                translate: {
-                    x: styleProperties.PercentLength.toDevicePixels(this.width) / 2,
-                    y: 0
-                },
-                duration: 1000,
-                curve: enums.AnimationCurve.easeIn
-            });
-        }
+        if (styleProperties.PercentLength.toDevicePixels(right.translateX) < platform.screen.mainScreen.widthPixels / 2)
+            animateContainer(right, 1);
+        animateContainer(left, 1);
     }, leftOpener);
 
     rightOpener.on(button.Button.tapEvent, function (eventData) {
-        right.animate({
-            translate: {
-                x: -styleProperties.PercentLength.toDevicePixels(this.width) / 2,
-                y: 0
-            },
-            duration: 1000,
-            curve: enums.AnimationCurve.easeIn
-        });
-
-        if (styleProperties.PercentLength.toDevicePixels(left.translateX) > platform.screen.mainScreen.widthPixels / 2) {
-            left.animate({
-                translate: {
-                    x: -styleProperties.PercentLength.toDevicePixels(this.width) / 2,
-                    y: 0
-                },
-                duration: 1000,
-                curve: enums.AnimationCurve.easeIn
-            });
-        }
+        if (styleProperties.PercentLength.toDevicePixels(left.translateX) > platform.screen.mainScreen.widthPixels / 2)
+            animateContainer(left, -1);
+        animateContainer(right, -1);
     }, rightOpener);
 
+    close1.on(button.Button.tapEvent, function (eventData) {
+        animateContainer(left, -1);
+    }, close1);
+    close2.on(button.Button.tapEvent, function (eventData) {
+        animateContainer(right, 1);
+    }, close2);
+}
+
+var animateContainer = function (view, _x) {
+    view.animate({
+        translate: {
+            x: _x * view.width.value / 2.63,
+            y: 0
+        },
+        duration: 1000,
+        curve: enums.AnimationCurve.easeIn
+    });
 }
 
 var clearLayout = function (layout) {

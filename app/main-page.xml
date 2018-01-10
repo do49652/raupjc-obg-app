@@ -25,7 +25,13 @@
 			</StackLayout>
 		</StackLayout>
 
-		<AbsoluteLayout id="leftContainer"></AbsoluteLayout>
-		<AbsoluteLayout id="rightContainer"></AbsoluteLayout>
+		<AbsoluteLayout id="leftContainer">
+			<StackLayout id="leftStackLayout" orientation="vertical">
+			</StackLayout>
+		</AbsoluteLayout>
+		<AbsoluteLayout id="rightContainer">
+			<StackLayout id="rightStackLayout" orientation="vertical">
+			</StackLayout>
+		</AbsoluteLayout>
 	</AbsoluteLayout>
 </Page>
