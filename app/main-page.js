@@ -2,11 +2,35 @@ require('nativescript-websockets');
 var textView = require('ui/text-view');
 var button = require('ui/button');
 var image = require('ui/image');
+var absoluteLayout = require('ui/layouts/absolute-layout');
+var stackLayout = require('ui/layouts/stack-layout');
+var gridLayout = require('ui/layouts/grid-layout');
+var enums = require("ui/enums");
+var styleProperties = require("ui/styling/style-properties");
+var color = require('color');
+var platform = require("platform")
 
-var page;
+var page, leftContainer, rightContainer;
 
 exports.pageLoaded = function (args) {
     page = args.object;
+
+    resize(page.getViewById("absoluteLayout"), 1, 1);
+    resize(page.getViewById("slackLayout"), 1, 1);
+
+    leftContainer = page.getViewById("leftContainer");
+    resize(leftContainer, 0.8, 1);
+    absoluteReposition(leftContainer, -0.8, 0);
+    leftContainer.style.backgroundColor = new color.Color("LightGray");
+
+    rightContainer = page.getViewById("rightContainer");
+    resize(rightContainer, 0.8, 1);
+    absoluteReposition(rightContainer, 1, 0);
+    rightContainer.style.backgroundColor = new color.Color("Gray");
+
+    //------------
+
+    addContainerOpeners(page.getViewById("topStackLayout"), leftContainer, rightContainer);
 };
 
 exports.join = function () {
@@ -237,9 +261,83 @@ exports.join = function () {
     });
 };
 
+var addContainerOpeners = function (main, left, right) {
+    var leftOpener = new button.Button();
+    leftOpener.text = "Items & Chat";
+
+    resize(leftOpener, 0.5, null);
+
+    var rightOpener = new button.Button();
+    rightOpener.text = "Log";
+
+    resize(rightOpener, 0.5, null);
+
+    main.addChild(leftOpener);
+    main.addChild(rightOpener);
+
+    leftOpener.on(button.Button.tapEvent, function (eventData) {
+        left.animate({
+            translate: {
+                x: styleProperties.PercentLength.toDevicePixels(this.width) / 2,
+                y: 0
+            },
+            duration: 1000,
+            curve: enums.AnimationCurve.easeIn
+        });
+
+        if (styleProperties.PercentLength.toDevicePixels(right.translateX) < platform.screen.mainScreen.widthPixels / 2) {
+            right.animate({
+                translate: {
+                    x: styleProperties.PercentLength.toDevicePixels(this.width) / 2,
+                    y: 0
+                },
+                duration: 1000,
+                curve: enums.AnimationCurve.easeIn
+            });
+        }
+    }, leftOpener);
+
+    rightOpener.on(button.Button.tapEvent, function (eventData) {
+        right.animate({
+            translate: {
+                x: -styleProperties.PercentLength.toDevicePixels(this.width) / 2,
+                y: 0
+            },
+            duration: 1000,
+            curve: enums.AnimationCurve.easeIn
+        });
+
+        if (styleProperties.PercentLength.toDevicePixels(left.translateX) > platform.screen.mainScreen.widthPixels / 2) {
+            left.animate({
+                translate: {
+                    x: -styleProperties.PercentLength.toDevicePixels(this.width) / 2,
+                    y: 0
+                },
+                duration: 1000,
+                curve: enums.AnimationCurve.easeIn
+            });
+        }
+    }, rightOpener);
+
+}
+
 var clearLayout = function (layout) {
     layout.eachChildView(v => {
         if (v.parent != null)
             v.parent._removeView(v);
     });
+};
+
+var resize = function (view, width, height) {
+    if (width != null)
+        view.width = (platform.screen.mainScreen.widthPixels * width) + "px";
+    if (height != null)
+        view.height = (platform.screen.mainScreen.heightPixels * height) + "px";
+};
+
+var absoluteReposition = function (view, x, y) {
+    if (x != null)
+        absoluteLayout.AbsoluteLayout.setLeft(view, (platform.screen.mainScreen.widthPixels * x) + "px");
+    if (y != null)
+        absoluteLayout.AbsoluteLayout.setTop(view, (platform.screen.mainScreen.heightPixels * y) + "px");
 };

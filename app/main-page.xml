@@ -1,22 +1,31 @@
 <Page loaded="pageLoaded">
 	<ActionBar id="actionBar" title="Join game" class="action-bar"></ActionBar>
 
-	<StackLayout id="slackLayout" orientation="vertical">
-		<Image src="https://i.imgur.com/V42zBSh.png" width="auto"/>
-		
-		<Label />
+	<AbsoluteLayout id="absoluteLayout">
+		<StackLayout orientation="vertical">
+			<StackLayout id="topStackLayout" orientation="horizontal"></StackLayout>
 
-		<Label text="Username:" />
-		<TextField id="username" />
+			<StackLayout id="slackLayout" orientation="vertical">
+				<Image src="https://i.imgur.com/V42zBSh.png" width="auto"/>
+				
+				<Label />
 
-		<Label text="Game name:" />
-		<TextField id="gamename" />
+				<Label text="Username:" />
+				<TextField id="username" />
 
-		<Label text="Password:" />
-		<TextField id="password" />
+				<Label text="Game name:" />
+				<TextField id="gamename" />
 
-		<Label />
+				<Label text="Password:" />
+				<TextField id="password" />
 
-		<Button text="Join" class="btn btn-primary" tap="join" width="300" />
-	</StackLayout>
+				<Label />
+
+				<Button text="Join" class="btn btn-primary" tap="join" width="300" />
+			</StackLayout>
+		</StackLayout>
+
+		<AbsoluteLayout id="leftContainer"></AbsoluteLayout>
+		<AbsoluteLayout id="rightContainer"></AbsoluteLayout>
+	</AbsoluteLayout>
 </Page>
