@@ -29,8 +29,14 @@
 			<StackLayout id="leftStackLayout" orientation="vertical">
 			</StackLayout>
 		</AbsoluteLayout>
+
 		<AbsoluteLayout id="rightContainer">
 			<StackLayout id="rightStackLayout" orientation="vertical">
+			</StackLayout>
+		</AbsoluteLayout>
+
+		<AbsoluteLayout id="modalContainer">
+			<StackLayout id="modalLayout" orientation="vertical">
 			</StackLayout>
 		</AbsoluteLayout>
 	</AbsoluteLayout>

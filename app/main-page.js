@@ -1,5 +1,6 @@
 require('nativescript-websockets');
 var textView = require('ui/text-view');
+var label = require('ui/label');
 var button = require('ui/button');
 var image = require('ui/image');
 var absoluteLayout = require('ui/layouts/absolute-layout');
@@ -9,8 +10,9 @@ var enums = require("ui/enums");
 var styleProperties = require("ui/styling/style-properties");
 var color = require('color');
 var platform = require("platform")
+var dialogs = require("ui/dialogs");
 
-var page, leftContainer, rightContainer;
+var page, modalContainer, leftContainer, rightContainer, moneyContainer, logContainer, chatContainer, chatInputField;
 
 exports.pageLoaded = function (args) {
     page = args.object;
@@ -18,19 +20,21 @@ exports.pageLoaded = function (args) {
     resize(page.getViewById("absoluteLayout"), 1, 1);
     resize(page.getViewById("slackLayout"), 1, 1);
 
-    leftContainer = page.getViewById("leftContainer");
-    resize(leftContainer, 0.8, 1);
-    absoluteReposition(leftContainer, -0.8, 0);
-    leftContainer.style.backgroundColor = new color.Color("LightGray");
+    leftContainer = page.getViewById("leftStackLayout");
+    resize(leftContainer.parent, 0.8, 1);
+    absoluteReposition(leftContainer.parent, -0.8, 0);
+    leftContainer.parent.style.backgroundColor = new color.Color("LightGray");
 
-    rightContainer = page.getViewById("rightContainer");
-    resize(rightContainer, 0.8, 1);
-    absoluteReposition(rightContainer, 1, 0);
-    rightContainer.style.backgroundColor = new color.Color("Gray");
+    rightContainer = page.getViewById("rightStackLayout");
+    resize(rightContainer.parent, 0.8, 1);
+    absoluteReposition(rightContainer.parent, 1, 0);
+    rightContainer.parent.style.backgroundColor = new color.Color("LightGray");
 
-    //------------
-
-    addContainerOpeners(page.getViewById("topStackLayout"), leftContainer, rightContainer);
+    modalContainer = page.getViewById("modalLayout");
+    resize(modalContainer.parent, 0.8, 0.8);
+    resize(modalContainer, 0.8, 0.8);
+    absoluteReposition(modalContainer.parent, 0.1, -1.8);
+    modalContainer.parent.style.backgroundColor = new color.Color("LightGray");
 };
 
 exports.join = function () {
@@ -79,13 +83,16 @@ exports.join = function () {
                 ws.send("ready");
                 gameStarted = true;
 
-                // show all views
+                addContainerOpeners(page.getViewById("topStackLayout"), leftContainer, rightContainer);
+
+                moneyContainer = new label.Label();
+                moneyContainer.text = "Money: ";
+                leftContainer.addChild(moneyContainer);
 
                 // set up chat
                 // ws.send("chat:" + username + ":" + $('#chatInput').val());
 
             } else {
-                if (!admin); // hide start button
                 messageField.text = message;
                 titleField.text = "Waiting for all players to join.";
             }
@@ -95,10 +102,77 @@ exports.join = function () {
         if (message == "ready") {
             ws.send("ready");
         } else if (message.startsWith("item:")) {
+            clearLayout(modalContainer);
+
             var msg = message.substring(2 + message.split(":")[1].length + message.split(":")[0].length);
 
-            // open modal
+            var modalTitleField = new textView.TextView();
+            modalTitleField.text = message.split(":")[1];
+            modalContainer.addChild(modalTitleField);
 
+            var modalMessageField = new textView.TextView();
+
+            if (msg.indexOf("IMG(") != -1) {
+                var img = new image.Image();
+                img.src = msg.substring(msg.indexOf("IMG(") + 4, msg.indexOf(") "))
+                img.height = 200 + "px";
+                modalContainer.addChild(img);
+                modalMessageField.text = msg.replace(msg.substring(msg.indexOf("IMG("), msg.indexOf(") ") + 1), "");
+            } else
+                modalMessageField.text = msg;
+            modalContainer.addChild(modalMessageField);
+
+            var btn = new button.Button();
+            btn.text = "Continue";
+
+            btn.on(button.Button.tapEvent, function (eventData) {
+                ws.send("item:" + message.split(":")[1]);
+            }, btn);
+            modalContainer.addChild(btn);
+
+            if (msg.startsWith("@Choice")) {
+                clearLayout(modalContainer);
+                modalContainer.addChild(modalTitleField);
+
+                var title = msg.split("\n")[0].split("->")[1].trim();
+                var choices = [];
+
+                for (let i = 1; i < msg.split("\n").length; i++) {
+                    choices.push({
+                        n: parseInt(msg.split("\n")[i].split("->")[0].replace("@C", "").trim()),
+                        text: msg.split("\n")[i].split("->")[1].split(";")[0].trim(),
+                        action: msg.split("\n")[i].substring(msg.split("\n")[i].indexOf(";") + 1).trim()
+                    });
+                }
+
+                if (title.indexOf("IMG(") != -1) {
+                    var img = new image.Image();
+                    img.src = title.substring(title.indexOf("IMG(") + 4, title.indexOf(") "));
+                    img.height = 200 + "px";
+                    modalContainer.addChild(img);
+                    modalMessageField.text = title.replace(title.substring(title.indexOf("IMG("), title.indexOf(") ") + 1), "");
+                } else
+                    modalMessageField.text = title;
+
+                modalContainer.addChild(modalMessageField);
+
+                for (i in choices) {
+                    var btn = new button.Button();
+                    btn.text = choices[i].text;
+                    btn.id = i + "";
+
+                    btn.on(button.Button.tapEvent, function (eventData) {
+                        ws.send("item:" + message.split(":")[1] + ":" + choices[parseInt(this.id)].action);
+                    }, btn);
+                    modalContainer.addChild(btn);
+                }
+            }
+
+            absoluteReposition(modalContainer.parent, 0.1, 0.1);
+            if (message.split(":")[2].trim() == "@End") {
+                clearLayout(modalContainer);
+                absoluteReposition(modalContainer.parent, 0.1, -1.8);
+            }
         } else if (message.startsWith("chat:")) {
             var sender = message.split(":")[1].trim();
             var sentMessage = message.substring(sender.length + 6);
@@ -123,11 +197,21 @@ exports.join = function () {
 
             // set player to log
 
-            log = "Money: " + game["Players"][username]["Money"];
-            for (let i = 0; i < game["Players"][username]["Items"].length; i++)
-                log += '<button class="btn btn-default" id="item' + (i + 1) + '">' + game["Players"][username]["Items"][i]["Name"] + "</button>";
+            clearLayout(leftContainer);
+            moneyContainer.text = "Money: " + game["Players"][username]["Money"];
+            leftContainer.addChild(moneyContainer);
 
-            // money and items
+            for (let i = 0; i < game["Players"][username]["Items"].length; i++) {
+                var btn = new button.Button();
+                btn.text = game["Players"][username]["Items"][i]["Name"];
+                btn.id = i + "";
+
+                btn.on(button.Button.tapEvent, function (eventData) {
+                    ws.send("item:" + game["Players"][username]["Items"][parseInt(this.id)]["Name"]);
+                }, btn);
+
+                leftContainer.addChild(btn);
+            }
 
             messageField = new textView.TextView();
             clearLayout(layout);
@@ -150,6 +234,8 @@ exports.join = function () {
                 }
 
             } else if (game["Scene"] == "choice") {
+                var img = new image.Image();
+                layout.addChild(img);
                 layout.addChild(messageField);
                 var title = game["Message"].split("\n")[0].split("->")[1].trim();
                 var choices = [];
@@ -162,7 +248,8 @@ exports.join = function () {
                     });
                 }
 
-                messageField.text = title; // IMG()
+                img.src = title.substring(title.indexOf("IMG(") + 4, title.indexOf(") "));
+                messageField.text = title.replace(title.substring(title.indexOf("IMG("), title.indexOf(") ") + 1), "");
 
                 for (i in choices) {
                     var btn = new button.Button();
@@ -251,12 +338,6 @@ exports.join = function () {
                     }, btn);
                 }
             }
-
-            for (let i = 0; i < game["Players"][username]["Items"].length; i++) {
-                /*$("#item" + (i + 1)).off("click").click(function () {
-                    ws.send("item:" + game["Players"][username]["Items"][i]["Name"]);
-                });*/
-            }
         }
     });
 };
@@ -289,22 +370,22 @@ var addContainerOpeners = function (main, left, right) {
     main.addChild(rightOpener);
 
     leftOpener.on(button.Button.tapEvent, function (eventData) {
-        if (styleProperties.PercentLength.toDevicePixels(right.translateX) < platform.screen.mainScreen.widthPixels / 2)
-            animateContainer(right, 1);
-        animateContainer(left, 1);
+        if (styleProperties.PercentLength.toDevicePixels(right.parent.translateX) < platform.screen.mainScreen.widthPixels / 2)
+            animateContainer(right.parent, 1);
+        animateContainer(left.parent, 1);
     }, leftOpener);
 
     rightOpener.on(button.Button.tapEvent, function (eventData) {
-        if (styleProperties.PercentLength.toDevicePixels(left.translateX) > platform.screen.mainScreen.widthPixels / 2)
-            animateContainer(left, -1);
-        animateContainer(right, -1);
+        if (styleProperties.PercentLength.toDevicePixels(left.parent.translateX) > platform.screen.mainScreen.widthPixels / 2)
+            animateContainer(left.parent, -1);
+        animateContainer(right.parent, -1);
     }, rightOpener);
 
     close1.on(button.Button.tapEvent, function (eventData) {
-        animateContainer(left, -1);
+        animateContainer(left.parent, -1);
     }, close1);
     close2.on(button.Button.tapEvent, function (eventData) {
-        animateContainer(right, 1);
+        animateContainer(right.parent, 1);
     }, close2);
 }
 
