@@ -15,7 +15,7 @@ var color = require('color');
 var platform = require("platform")
 var dialogs = require("ui/dialogs");
 
-var username, ws, page, modalContainer, leftContainer, rightContainer, logContainer, chatContainer, chatInputField;
+var username, ws, page, modalContainer, leftContainer, rightContainer, logContainer, chatContainer, chatInputField, playersContainer;
 
 exports.sendChat = function (args) {
     if (ws == null) return;
@@ -54,6 +54,36 @@ exports.pageLoaded = function (args) {
 
     chatInputField = page.getViewById("chatInputField");
     resize(chatInputField, 0.8, 0.1 / 2);
+
+    playersContainer = page.getViewById("playersContainer");
+    resize(playersContainer.parent, 1, 0.4);
+    absoluteReposition(playersContainer.parent, 0, 0.92);
+    playersContainer = page.getViewById("playersLayout");
+    resize(playersContainer.parent, 1, 0.35);
+    var toggle = page.getViewById("togglePlayers");
+    toggle.text = "Players";
+
+    toggle.on(button.Button.tapEvent, function (eventData) {
+        if (page.getViewById("playersContainer").parent.translateY == 0) {
+            page.getViewById("playersContainer").parent.animate({
+                translate: {
+                    x: 0,
+                    y: -platform.screen.mainScreen.heightPixels * 0.1
+                },
+                duration: 1000,
+                curve: enums.AnimationCurve.easeIn
+            });
+        } else {
+            page.getViewById("playersContainer").parent.animate({
+                translate: {
+                    x: 0,
+                    y: 0
+                },
+                duration: 1000,
+                curve: enums.AnimationCurve.easeIn
+            });
+        }
+    }, toggle);
 };
 
 exports.join = function () {
@@ -105,19 +135,18 @@ exports.join = function () {
 
                     var allGames = response.content.toString();
                     allGames.substring(0, allGames.length - 1);
-
                     games = allGames.split(":");
 
                     for (let i = 0; i < games.length; i++) {
                         if (games[i] == "") continue;
                         var btn = new button.Button();
+                        btn.className = "btn-primary";
                         btn.text = games[i];
                         btn.on(button.Button.tapEvent, function (eventData) {
                             ws.send('start:' + this.text);
                         }, btn);
                         layout.addChild(btn);
                     }
-
                 }, function (e) {});
             } else if (message == "wrong-password") {
                 messageField.text = "wrong password";
@@ -164,6 +193,7 @@ exports.join = function () {
             modalContainer.addChild(modalMessageField);
 
             var btn = new button.Button();
+            btn.className = "btn-warning";
             btn.text = "Continue";
 
             btn.on(button.Button.tapEvent, function (eventData) {
@@ -199,6 +229,7 @@ exports.join = function () {
 
                 for (i in choices) {
                     var btn = new button.Button();
+                    btn.className = "btn-info";
                     btn.text = choices[i].text;
                     btn.id = i + "";
 
@@ -238,11 +269,12 @@ exports.join = function () {
             }
             logContainer.parent.scrollToVerticalOffset(logContainer.parent.scrollableHeight, false);
 
-            var log = "";
-            for (let i = 0; i < Object.keys(game["Players"]).length; i++)
-                log += Object.keys(game["Players"])[i] + ": " + game["Players"][Object.keys(game["Players"])[i]]["Space"] + "\n";
-
-            // set player to log
+            clearLayout(playersContainer);
+            for (let i = 0; i < Object.keys(game["Players"]).length; i++) {
+                var pLabel = new label.Label();
+                pLabel.text = Object.keys(game["Players"])[i] + ": " + game["Players"][Object.keys(game["Players"])[i]]["Space"];
+                playersContainer.addChild(pLabel);
+            }
 
             clearLayout(leftContainer);
             addContainerOpeners(null, leftContainer, null);
@@ -251,6 +283,7 @@ exports.join = function () {
 
             for (let i = 0; i < game["Players"][username]["Items"].length; i++) {
                 var btn = new button.Button();
+                btn.className = "btn-default";
                 btn.text = game["Players"][username]["Items"][i]["Name"];
                 btn.id = i + "";
 
@@ -272,6 +305,7 @@ exports.join = function () {
                 layout.addChild(img);
 
                 var btn = new button.Button();
+                btn.className = "btn-primary";
                 btn.text = "Roll";
                 layout.addChild(btn);
 
@@ -301,6 +335,7 @@ exports.join = function () {
 
                 for (i in choices) {
                     var btn = new button.Button();
+                    btn.className = "btn-info";
                     btn.text = choices[i].text;
 
                     if (playingUsername == username) {
@@ -330,6 +365,7 @@ exports.join = function () {
 
                 for (i in items) {
                     var btn = new button.Button();
+                    btn.className = "btn-default";
                     btn.id = i;
 
                     i = parseInt(i);
@@ -344,6 +380,7 @@ exports.join = function () {
                 }
 
                 var btn = new button.Button();
+                btn.className = "btn-warning";
                 btn.text = "Cancel";
                 layout.addChild(btn);
 
@@ -357,6 +394,7 @@ exports.join = function () {
                 messageField.text = "You rolled " + game["LastRoll"] + ".";
 
                 var btn = new button.Button();
+                btn.className = "btn-primary";
                 btn.text = "Move";
                 layout.addChild(btn);
 
@@ -371,6 +409,7 @@ exports.join = function () {
                 layout.addChild(messageField);
 
                 var btn = new button.Button();
+                btn.className = "btn-warning";
                 btn.text = "Continue";
                 layout.addChild(btn);
 
@@ -397,17 +436,21 @@ var addContainerOpeners = function (main, left, right) {
     resize(rightLayout, 0.8, 1);
 
     var leftOpener = new button.Button();
+    leftOpener.className = "btn-default";
     leftOpener.text = "Items";
 
     resize(leftOpener, 0.5, null);
 
     var rightOpener = new button.Button();
+    rightOpener.className = "btn-default";
     rightOpener.text = "Chat & Log";
 
     resize(rightOpener, 0.5, null);
 
     var close1 = new button.Button();
+    close1.className = "btn-default";
     var close2 = page.getViewById("closeButton");
+    close2.className = "btn-default";
     close1.text = "Close";
     close2.text = "Close";
 

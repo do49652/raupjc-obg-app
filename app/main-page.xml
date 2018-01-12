@@ -47,5 +47,15 @@
 			<StackLayout id="modalLayout" orientation="vertical">
 			</StackLayout>
 		</AbsoluteLayout>
+
+		<AbsoluteLayout>
+			<StackLayout id="playersContainer">
+				<Button id="togglePlayers"></Button>
+				<ScrollView>
+					<StackLayout id="playersLayout" orientation="vertical">
+					</StackLayout>
+				</ScrollView>
+			</StackLayout>
+		</AbsoluteLayout>
 	</AbsoluteLayout>
 </Page>
