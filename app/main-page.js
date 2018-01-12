@@ -1,4 +1,5 @@
 require('nativescript-websockets');
+var http = require("http");
 var textView = require('ui/text-view');
 var textField = require('ui/text-field');
 var label = require('ui/label');
@@ -20,6 +21,7 @@ exports.sendChat = function (args) {
     if (ws == null) return;
     ws.send("chat:" + username + ":" + chatInputField.text);
     chatInputField.text = "";
+    chatContainer.parent.scrollToVerticalOffset(chatContainer.parent.scrollableHeight, false);
 };
 
 exports.pageLoaded = function (args) {
@@ -90,7 +92,33 @@ exports.join = function () {
         if (!gameStarted) {
             if (message == "admin") {
                 admin = true;
-                // game select
+
+                var loadingLabel = new label.Label();
+                loadingLabel.text = "Loading games...";
+                layout.addChild(loadingLabel);
+
+                http.request({
+                    url: "http://192.168.1.3:5000/ContentCreator/GetGames",
+                    method: "POST"
+                }).then(function (response) {
+                    layout._removeView(loadingLabel);
+
+                    var allGames = response.content.toString();
+                    allGames.substring(0, allGames.length - 1);
+
+                    games = allGames.split(":");
+
+                    for (let i = 0; i < games.length; i++) {
+                        if (games[i] == "") continue;
+                        var btn = new button.Button();
+                        btn.text = games[i];
+                        btn.on(button.Button.tapEvent, function (eventData) {
+                            ws.send('start:' + this.text);
+                        }, btn);
+                        layout.addChild(btn);
+                    }
+
+                }, function (e) {});
             } else if (message == "wrong-password") {
                 messageField.text = "wrong password";
             } else if (message == "username-taken") {
@@ -193,6 +221,7 @@ exports.join = function () {
             var chatMessage = new label.Label();
             chatMessage.text = "[" + sender + "] " + sentMessage;
             chatContainer.addChild(chatMessage);
+            chatContainer.parent.scrollToVerticalOffset(chatContainer.parent.scrollableHeight, false);
         } else {
             var game = JSON.parse(message);
 
@@ -207,6 +236,7 @@ exports.join = function () {
                 logMessage.text = game["Log"][i].substring(game["Log"][i].indexOf("]") + 1);
                 logContainer.addChild(logMessage);
             }
+            logContainer.parent.scrollToVerticalOffset(logContainer.parent.scrollableHeight, false);
 
             var log = "";
             for (let i = 0; i < Object.keys(game["Players"]).length; i++)
