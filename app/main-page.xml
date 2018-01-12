@@ -32,6 +32,14 @@
 
 		<AbsoluteLayout id="rightContainer">
 			<StackLayout id="rightStackLayout" orientation="vertical">
+				<Button id="closeButton"></Button>
+				<ScrollView>
+					<StackLayout id="chatContainer"></StackLayout>
+				</ScrollView>
+				<TextField id="chatInputField" returnPress="sendChat" />
+				<ScrollView>
+					<StackLayout id="logContainer"></StackLayout>
+				</ScrollView>
 			</StackLayout>
 		</AbsoluteLayout>
 

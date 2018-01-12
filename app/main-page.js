@@ -1,18 +1,26 @@
 require('nativescript-websockets');
 var textView = require('ui/text-view');
+var textField = require('ui/text-field');
 var label = require('ui/label');
 var button = require('ui/button');
 var image = require('ui/image');
 var absoluteLayout = require('ui/layouts/absolute-layout');
 var stackLayout = require('ui/layouts/stack-layout');
 var gridLayout = require('ui/layouts/grid-layout');
+var scrollView = require('ui/scroll-view');
 var enums = require("ui/enums");
 var styleProperties = require("ui/styling/style-properties");
 var color = require('color');
 var platform = require("platform")
 var dialogs = require("ui/dialogs");
 
-var page, modalContainer, leftContainer, rightContainer, moneyContainer, logContainer, chatContainer, chatInputField;
+var username, ws, page, modalContainer, leftContainer, rightContainer, logContainer, chatContainer, chatInputField;
+
+exports.sendChat = function (args) {
+    if (ws == null) return;
+    ws.send("chat:" + username + ":" + chatInputField.text);
+    chatInputField.text = "";
+};
 
 exports.pageLoaded = function (args) {
     page = args.object;
@@ -23,18 +31,27 @@ exports.pageLoaded = function (args) {
     leftContainer = page.getViewById("leftStackLayout");
     resize(leftContainer.parent, 0.8, 1);
     absoluteReposition(leftContainer.parent, -0.8, 0);
-    leftContainer.parent.style.backgroundColor = new color.Color("LightGray");
+    leftContainer.parent.style.backgroundColor = new color.Color("White");
 
     rightContainer = page.getViewById("rightStackLayout");
     resize(rightContainer.parent, 0.8, 1);
     absoluteReposition(rightContainer.parent, 1, 0);
-    rightContainer.parent.style.backgroundColor = new color.Color("LightGray");
+    rightContainer.parent.style.backgroundColor = new color.Color("White");
 
     modalContainer = page.getViewById("modalLayout");
     resize(modalContainer.parent, 0.8, 0.8);
     resize(modalContainer, 0.8, 0.8);
     absoluteReposition(modalContainer.parent, 0.1, -1.8);
-    modalContainer.parent.style.backgroundColor = new color.Color("LightGray");
+    modalContainer.parent.style.backgroundColor = new color.Color("White");
+
+    logContainer = page.getViewById("logContainer");
+    resize(logContainer.parent, 0.8, 0.4);
+
+    chatContainer = page.getViewById("chatContainer");
+    resize(chatContainer.parent, 0.8, 0.4 + 0.1 / 2);
+
+    chatInputField = page.getViewById("chatInputField");
+    resize(chatInputField, 0.8, 0.1 / 2);
 };
 
 exports.join = function () {
@@ -42,7 +59,7 @@ exports.join = function () {
     var gameStarted = false;
     var thegamename;
 
-    var username = page.getViewById("username").text;
+    username = page.getViewById("username").text;
     var gamename = page.getViewById("gamename").text;
     var password = page.getViewById("password").text;
 
@@ -56,7 +73,7 @@ exports.join = function () {
     var messageField = new textView.TextView();
     layout.addChild(messageField);
 
-    var ws = new WebSocket("ws://192.168.1.3:8181");
+    ws = new WebSocket("ws://192.168.1.3:8181");
 
     ws.addEventListener('open', function (evt) {
         messageField.text = "connection open";
@@ -88,10 +105,6 @@ exports.join = function () {
                 moneyContainer = new label.Label();
                 moneyContainer.text = "Money: ";
                 leftContainer.addChild(moneyContainer);
-
-                // set up chat
-                // ws.send("chat:" + username + ":" + $('#chatInput').val());
-
             } else {
                 messageField.text = message;
                 titleField.text = "Waiting for all players to join.";
@@ -115,7 +128,7 @@ exports.join = function () {
             if (msg.indexOf("IMG(") != -1) {
                 var img = new image.Image();
                 img.src = msg.substring(msg.indexOf("IMG(") + 4, msg.indexOf(") "))
-                img.height = 200 + "px";
+                img.height = 400 + "px";
                 modalContainer.addChild(img);
                 modalMessageField.text = msg.replace(msg.substring(msg.indexOf("IMG("), msg.indexOf(") ") + 1), "");
             } else
@@ -148,7 +161,7 @@ exports.join = function () {
                 if (title.indexOf("IMG(") != -1) {
                     var img = new image.Image();
                     img.src = title.substring(title.indexOf("IMG(") + 4, title.indexOf(") "));
-                    img.height = 200 + "px";
+                    img.height = 400 + "px";
                     modalContainer.addChild(img);
                     modalMessageField.text = title.replace(title.substring(title.indexOf("IMG("), title.indexOf(") ") + 1), "");
                 } else
@@ -177,27 +190,32 @@ exports.join = function () {
             var sender = message.split(":")[1].trim();
             var sentMessage = message.substring(sender.length + 6);
 
-            // append sentMessage to chat
-
+            var chatMessage = new label.Label();
+            chatMessage.text = "[" + sender + "] " + sentMessage;
+            chatContainer.addChild(chatMessage);
         } else {
             var game = JSON.parse(message);
 
             var t = parseInt(game["Turn"]) % Object.keys(game["Players"]).length;
             var playingUsername = game["Players"][Object.keys(game["Players"])[t]]["Username"];
 
+            var childCount = 0;
+            logContainer.eachChildView((v) => childCount++);
+
+            for (let i = childCount; i < game["Log"].length; i++) {
+                var logMessage = new label.Label();
+                logMessage.text = game["Log"][i].substring(game["Log"][i].indexOf("]") + 1);
+                logContainer.addChild(logMessage);
+            }
+
             var log = "";
-            for (let i = 0; i < game["Log"].length; i++)
-                log += game["Log"][i];
-
-            // append log to log
-
-            log = "";
             for (let i = 0; i < Object.keys(game["Players"]).length; i++)
                 log += Object.keys(game["Players"])[i] + ": " + game["Players"][Object.keys(game["Players"])[i]]["Space"] + "\n";
 
             // set player to log
 
             clearLayout(leftContainer);
+            addContainerOpeners(null, leftContainer, null);
             moneyContainer.text = "Money: " + game["Players"][username]["Money"];
             leftContainer.addChild(moneyContainer);
 
@@ -349,43 +367,45 @@ var addContainerOpeners = function (main, left, right) {
     resize(rightLayout, 0.8, 1);
 
     var leftOpener = new button.Button();
-    leftOpener.text = "Items & Chat";
+    leftOpener.text = "Items";
 
     resize(leftOpener, 0.5, null);
 
     var rightOpener = new button.Button();
-    rightOpener.text = "Log";
+    rightOpener.text = "Chat & Log";
 
     resize(rightOpener, 0.5, null);
 
     var close1 = new button.Button();
-    var close2 = new button.Button();
+    var close2 = page.getViewById("closeButton");
     close1.text = "Close";
     close2.text = "Close";
 
-    leftLayout.addChild(close1);
-    rightLayout.addChild(close2);
+    if (left != null)
+        leftLayout.addChild(close1);
 
-    main.addChild(leftOpener);
-    main.addChild(rightOpener);
+    if (main != null) {
+        main.addChild(leftOpener);
+        main.addChild(rightOpener);
+    }
 
     leftOpener.on(button.Button.tapEvent, function (eventData) {
-        if (styleProperties.PercentLength.toDevicePixels(right.parent.translateX) < platform.screen.mainScreen.widthPixels / 2)
-            animateContainer(right.parent, 1);
-        animateContainer(left.parent, 1);
+        if (styleProperties.PercentLength.toDevicePixels(rightLayout.parent.translateX) < platform.screen.mainScreen.widthPixels / 2)
+            animateContainer(rightLayout.parent, 1);
+        animateContainer(leftLayout.parent, 1);
     }, leftOpener);
 
     rightOpener.on(button.Button.tapEvent, function (eventData) {
-        if (styleProperties.PercentLength.toDevicePixels(left.parent.translateX) > platform.screen.mainScreen.widthPixels / 2)
-            animateContainer(left.parent, -1);
-        animateContainer(right.parent, -1);
+        if (styleProperties.PercentLength.toDevicePixels(leftLayout.parent.translateX) > platform.screen.mainScreen.widthPixels / 2)
+            animateContainer(leftLayout.parent, -1);
+        animateContainer(rightLayout.parent, -1);
     }, rightOpener);
 
     close1.on(button.Button.tapEvent, function (eventData) {
-        animateContainer(left.parent, -1);
+        animateContainer(leftLayout.parent, -1);
     }, close1);
     close2.on(button.Button.tapEvent, function (eventData) {
-        animateContainer(right.parent, 1);
+        animateContainer(rightLayout.parent, 1);
     }, close2);
 }
 
