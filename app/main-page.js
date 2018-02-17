@@ -15,6 +15,8 @@ var color = require('color');
 var platform = require("platform")
 var dialogs = require("ui/dialogs");
 
+var ipAdress = "onlineboardgames.tk";
+
 var username, ws, page, modalContainer, leftContainer, rightContainer, logContainer, chatContainer, chatInputField, playersContainer;
 
 exports.sendChat = function (args) {
@@ -105,7 +107,7 @@ exports.join = function () {
     var messageField = new textView.TextView();
     layout.addChild(messageField);
 
-    ws = new WebSocket("ws://192.168.1.3:8181");
+    ws = new WebSocket("ws://" + ipAdress + ":8181");
 
     ws.addEventListener('open', function (evt) {
         messageField.text = "connection open";
@@ -128,7 +130,7 @@ exports.join = function () {
                 layout.addChild(loadingLabel);
 
                 http.request({
-                    url: "http://192.168.1.3:5000/ContentCreator/GetGames",
+                    url: "http://" + ipAdress + ":5000/ContentCreator/GetGames",
                     method: "POST"
                 }).then(function (response) {
                     layout._removeView(loadingLabel);
