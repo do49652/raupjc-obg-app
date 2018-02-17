@@ -130,7 +130,7 @@ exports.join = function () {
                 layout.addChild(loadingLabel);
 
                 http.request({
-                    url: "http://" + ipAdress + ":5000/ContentCreator/GetGames",
+                    url: "http://" + ipAdress + "/ContentCreator/GetGames",
                     method: "POST"
                 }).then(function (response) {
                     layout._removeView(loadingLabel);
